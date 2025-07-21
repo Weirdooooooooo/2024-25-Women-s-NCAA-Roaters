@@ -1,0 +1,121 @@
+import json
+import random
+
+# ===== 1. Top 50 teams =====
+top_50_teams = [
+    "UConn Huskies", "South Carolina Gamecocks", "UCLA Bruins", "Texas Longhorns",
+    "USC Trojans", "LSU Tigers", "Notre Dame Fighting Irish", "NC State Wolfpack",
+    "Iowa Hawkeyes", "Stanford Cardinal", "Ohio State Buckeyes", "Indiana Hoosiers",
+    "Maryland Terrapins", "Tennessee Lady Vols", "Duke Blue Devils", "Kansas State Wildcats",
+    "Baylor Bears", "Oklahoma Sooners", "Florida State Seminoles", "Virginia Tech Hokies",
+    "Oregon Ducks", "Colorado Buffaloes", "Arizona Wildcats", "Louisville Cardinals",
+    "Michigan Wolverines", "Mississippi State Bulldogs", "Ole Miss Rebels", "Creighton Bluejays",
+    "Marquette Golden Eagles", "Gonzaga Bulldogs", "Washington State Cougars", "Utah Utes",
+    "Arkansas Razorbacks", "Nebraska Cornhuskers", "Miami Hurricanes", "Villanova Wildcats",
+    "North Carolina Tar Heels", "Iowa State Cyclones", "Princeton Tigers", "Oregon State Beavers",
+    "Texas A&M Aggies", "Missouri Tigers", "Seton Hall Pirates", "Florida Gators",
+    "Kansas Jayhawks", "Georgia Bulldogs", "DePaul Blue Demons", "Boston College Eagles",
+    "Virginia Cavaliers", "Minnesota Golden Gophers"
+]
+
+# ===== 2. Helper functions =====
+
+def generate_player_name(team_name, index):
+    """Creates a fake but realistic player name."""
+    first_names = ["Paige", "Azzi", "Caitlin", "Angel", "Haley", "Camila", "Jordan", "Diamond", "Taylor", "Sydney"]
+    last_names = ["Bueckers", "Clark", "Johnson", "Smith", "Williams", "Brown", "Anderson", "Davis", "Edwards", "Robinson"]
+    return random.choice(first_names), random.choice(last_names)
+
+def generate_player(team_name, pid):
+    """Generates a single player JSON entry."""
+    first, last = generate_player_name(team_name, pid)
+    return {
+        "pid": pid,
+        "firstName": first,
+        "lastName": last,
+        "pos": random.choice(["G", "F", "C"]),
+        "hgt": random.randint(66, 80),  # 5'6" to 6'8"
+        "weight": random.randint(135, 200),
+        "born": {
+            "year": random.randint(2000, 2006),
+            "loc": "USA"
+        },
+        "ratings": {
+            "ovr": random.randint(70, 95),
+            "pot": random.randint(80, 99)
+        },
+        "imgURL": "https://example.com/player_image.jpg",  # placeholder
+        "rosterOrder": pid % 12
+    }
+
+def generate_roster(team_name, tid, start_pid):
+    """Generates a roster of 12 players for a team."""
+    roster = []
+    pid = start_pid
+    for _ in range(12):  # typical NCAA roster ~12
+        roster.append(generate_player(team_name, pid))
+        pid += 1
+    return roster, pid
+
+def generate_free_agents(start_pid, count=20):
+    """Generates free agents representing future draft prospects."""
+    agents = []
+    pid = start_pid
+    for _ in range(count):
+        first, last = generate_player_name("FA", pid)
+        agents.append({
+            "pid": pid,
+            "firstName": first,
+            "lastName": last,
+            "pos": random.choice(["G", "F", "C"]),
+            "hgt": random.randint(66, 80),
+            "weight": random.randint(130, 200),
+            "born": {
+                "year": random.randint(2006, 2008),
+                "loc": "USA"
+            },
+            "ratings": {
+                "ovr": random.randint(60, 75),
+                "pot": random.randint(85, 99)
+            },
+            "freeAgent": True,
+            "imgURL": "https://example.com/future_prospect.jpg"
+        })
+        pid += 1
+    return agents, pid
+
+# ===== 3. Build BBGM JSON =====
+
+bbgm = {
+    "season": 2024,
+    "teams": [],
+    "freeAgents": []
+}
+
+tid = 0
+pid = 1000  # unique player IDs start here
+
+# Create all 50 teams with rosters
+for team_name in top_50_teams:
+    region = team_name.split()[0]
+    abbrev = "".join([c for c in region.upper() if c.isalpha()])[:4]  # first 4 letters
+    roster, pid = generate_roster(team_name, tid, pid)
+    bbgm["teams"].append({
+        "tid": tid,
+        "region": region,
+        "name": team_name,
+        "abbrev": abbrev,
+        "players": roster
+    })
+    tid += 1
+
+# Add ~50 free agents (future draft prospects)
+free_agents, pid = generate_free_agents(pid, count=50)
+bbgm["freeAgents"] = free_agents
+
+# ===== 4. Save JSON file =====
+
+with open("women_top50_bbgm.json", "w") as f:
+    json.dump(bbgm, f, indent=2)
+
+print("✅ Generated women_top50_bbgm.json with 50 teams + free agents!")
